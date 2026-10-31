@@ -34,7 +34,11 @@ class Config:
     PRICE_CAN = _int_env("PRICE_CAN", 2)
     SESSION_TIMEOUT_S = _int_env("SESSION_TIMEOUT_S", 300)
     MAX_ITEMS_PER_SESSION = _int_env("MAX_ITEMS_PER_SESSION", 20)
-    PAYOUT_MODE = os.getenv("PAYOUT_MODE", "mock")
+    PAYOUT_MODE = os.getenv("PAYOUT_MODE", "mock")  # mock | cashfree
+    CASHFREE_ENV = os.getenv("CASHFREE_ENV", "sandbox")  # sandbox | production
+    CASHFREE_CLIENT_ID = os.getenv("CASHFREE_CLIENT_ID", "")
+    CASHFREE_CLIENT_SECRET = os.getenv("CASHFREE_CLIENT_SECRET", "")
+    CASHFREE_PUBLIC_KEY_PATH = resolve_path(os.getenv("CASHFREE_PUBLIC_KEY_PATH")) if os.getenv("CASHFREE_PUBLIC_KEY_PATH") else ""
     HOST = os.getenv("HOST", "0.0.0.0")
     PORT = _int_env("PORT", 5001)  # 5000 is taken by macOS AirPlay
     DEBUG = os.getenv("FLASK_DEBUG", "0") == "1"

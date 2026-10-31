@@ -20,6 +20,10 @@ def create_app(overrides=None):
     if not app.config.get("SECRET_KEY_FROM_ENV", True):
         app.logger.warning("SECRET_KEY not set in .env - using a random one for this process")
     app.logger.info("Database: %s", app.config["DATABASE_PATH"])
+    if app.config["PAYOUT_MODE"] == "cashfree":
+        app.logger.info("Payouts: Cashfree %s", app.config["CASHFREE_ENV"])
+        if not (app.config["CASHFREE_CLIENT_ID"] and app.config["CASHFREE_CLIENT_SECRET"]):
+            app.logger.warning("PAYOUT_MODE=cashfree but CASHFREE_CLIENT_ID/SECRET are empty - payouts will fail")
 
     db.init_app(app)
 

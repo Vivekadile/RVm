@@ -52,6 +52,9 @@ def history():
         "SELECT COALESCE(SUM(type = 'bottle'), 0) AS bottles, COALESCE(SUM(type = 'can'), 0) AS cans FROM deposits"
     ).fetchone()
 
+    cfg = current_app.config
+    payout_label = f"Cashfree {cfg['CASHFREE_ENV']}" if cfg["PAYOUT_MODE"] == "cashfree" else "mock"
     return render_template(
         "admin.html", sessions=sessions, deposits=deposits, totals=totals, items=items, fmt_time=fmt_time,
+        payout_label=payout_label,
     )

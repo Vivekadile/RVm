@@ -30,10 +30,7 @@ def end_session(session, reason):
     if cur.rowcount == 0:
         return get_session(session["id"])
 
-    result = send_payout(
-        session["upi_id"], session["total_amount"], session["id"],
-        mode=current_app.config["PAYOUT_MODE"],
-    )
+    result = send_payout(session["upi_id"], session["total_amount"], session["id"], current_app.config)
     db.execute(
         "UPDATE sessions SET payout_status = ?, payout_ref = ? WHERE id = ?",
         (result["status"], result["ref"], session["id"]),

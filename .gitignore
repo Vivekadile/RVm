@@ -1,5 +1,6 @@
 # Secrets
 .env
+*.pem
 firmware/rvm_esp32/config.h
 
 # Python
