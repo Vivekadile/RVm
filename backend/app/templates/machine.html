@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b6e4f">
+  <title>Smart RVM - {{ machine_id }}</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♻️</text></svg>">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <!-- Falling cans & bottles are added here by app.js -->
+  <div id="rain" class="rain" aria-hidden="true"></div>
+
+  <main class="card" id="app" data-machine-id="{{ machine_id }}">
+    <div class="badge">♻️ Smart RVM · {{ machine_id }}</div>
+
+    <!-- Step 0: welcome splash -->
+    <section id="welcome-view" class="view">
+      <div class="hero-icon">♻️</div>
+      <p class="eyebrow">Welcome to</p>
+      <h1 class="hero-title">Reverse Vending Machine</h1>
+      <p class="muted">Recycle bottles &amp; cans, get instant UPI rewards.</p>
+      <div class="price-row">
+        <span class="price-chip">🧴 Bottle ₹{{ price_bottle }}</span>
+        <span class="price-chip">🥫 Can ₹{{ price_can }}</span>
+      </div>
+      <button type="button" id="welcome-btn">Get started →</button>
+    </section>
+
+    <!-- Step 1: enter UPI -->
+    <section id="start-view" class="view hidden">
+      <h1>Where should we pay you?</h1>
+      <p class="muted">Bottle ₹{{ price_bottle }} · Can ₹{{ price_can }}</p>
+      <form id="start-form">
+        <label for="upi-id">Your UPI ID</label>
+        <input type="text" id="upi-id" placeholder="e.g. test@ybl" autocomplete="off" autocapitalize="off" required>
+        <button type="submit" id="start-btn">Start</button>
+      </form>
+    </section>
+
+    <!-- Step 2: live session -->
+    <section id="active-view" class="view hidden">
+      <h1>Insert items now</h1>
+      <p class="muted">Press <strong>Done</strong> here or on the machine when finished.</p>
+      <div class="stats">
+        <div><span id="bottle-count">0</span><small>bottles</small></div>
+        <div><span id="can-count">0</span><small>cans</small></div>
+        <div><span id="total-amount">₹0</span><small>total</small></div>
+      </div>
+      <p class="muted">Paying to <span id="upi-masked"></span></p>
+      <button type="button" id="done-btn">Done</button>
+    </section>
+
+    <!-- Step 3: thank you -->
+    <section id="done-view" class="view hidden">
+      <div class="hero-icon" id="done-icon">💚</div>
+      <h1 class="hero-title" id="done-title">Thanks for using RVM!</h1>
+      <p id="done-text"></p>
+      <p class="muted"><span id="done-counts"></span></p>
+      <button type="button" id="again-btn">Start new session</button>
+    </section>
+
+    <div id="error-box" class="error hidden"></div>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

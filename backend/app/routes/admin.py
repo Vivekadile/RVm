@@ -1,0 +1,57 @@
+"""Operator page: transaction history (HTTP Basic auth, user 'admin')."""
+import hmac
+from datetime import datetime
+from functools import wraps
+
+from flask import Blueprint, Response, current_app, render_template, request
+
+from ..db import get_db
+
+bp = Blueprint("admin", __name__)
+
+
+def require_admin(view):
+    """Ask for ADMIN_PASSWORD via the browser's login popup."""
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        expected = current_app.config["ADMIN_PASSWORD"]
+        if not expected:
+            return Response("Admin disabled: set ADMIN_PASSWORD in .env", 403)
+        auth = request.authorization
+        given = auth.password if auth and auth.username == "admin" else ""
+        if not hmac.compare_digest(given or "", expected):
+            return Response("Login required", 401, {"WWW-Authenticate": 'Basic realm="RVM admin"'})
+        return view(*args, **kwargs)
+    return wrapper
+
+
+def fmt_time(ts):
+    """Unix seconds -> 'DD Mon HH:MM:SS' local time."""
+    return datetime.fromtimestamp(ts).strftime("%d %b %H:%M:%S") if ts else "-"
+
+
+@bp.get("/admin")
+@require_admin
+def history():
+    """All sessions (newest first) with their deposits and overall totals."""
+    db = get_db()
+    sessions = db.execute("SELECT * FROM sessions ORDER BY created_at DESC LIMIT 200").fetchall()
+
+    deposits = {}
+    for row in db.execute("SELECT * FROM deposits ORDER BY created_at"):
+        deposits.setdefault(row["session_id"], []).append(row)
+
+    totals = db.execute(
+        "SELECT COUNT(*) AS sessions, "
+        "COALESCE(SUM(status = 'active'), 0) AS active, "
+        "COALESCE(SUM(payout_status = 'success'), 0) AS paid, "
+        "COALESCE(SUM(CASE WHEN payout_status = 'success' THEN total_amount END), 0) AS paid_amount "
+        "FROM sessions"
+    ).fetchone()
+    items = db.execute(
+        "SELECT COALESCE(SUM(type = 'bottle'), 0) AS bottles, COALESCE(SUM(type = 'can'), 0) AS cans FROM deposits"
+    ).fetchone()
+
+    return render_template(
+        "admin.html", sessions=sessions, deposits=deposits, totals=totals, items=items, fmt_time=fmt_time,
+    )

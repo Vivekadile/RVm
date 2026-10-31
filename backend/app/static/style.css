@@ -1,0 +1,63 @@
+* { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body {
+  margin: 0; padding: 16px; min-height: 100vh;
+  display: flex; justify-content: center; align-items: center;
+  background: linear-gradient(160deg, #0b6e4f 0%, #14a37f 55%, #8fd694 100%);
+  overflow-x: hidden;
+}
+
+.card {
+  position: relative; z-index: 2;
+  background: #fff; padding: 28px; border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18); width: 100%; max-width: 400px; text-align: center;
+}
+.badge { background: #e6f4ea; color: #137333; font-weight: 600; font-size: 14px; padding: 6px 12px; border-radius: 20px; display: inline-block; margin-bottom: 12px; }
+h1 { font-size: 22px; margin: 8px 0; color: #202124; }
+.muted { font-size: 14px; color: #5f6368; }
+
+/* Welcome / thank-you hero */
+.hero-icon { font-size: 64px; line-height: 1; margin: 8px 0 4px; animation: spin-in 0.9s cubic-bezier(.2, .9, .3, 1.3) both; }
+.eyebrow { margin: 8px 0 0; font-size: 15px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #14a37f; }
+.hero-title { font-size: 28px; line-height: 1.2; margin: 4px 0 10px; color: #0b6e4f; }
+.price-row { display: flex; justify-content: center; gap: 8px; margin: 16px 0 20px; flex-wrap: wrap; }
+.price-chip { background: #f1f8f4; border: 1px solid #cdebd8; color: #0b6e4f; font-weight: 600; font-size: 14px; padding: 6px 12px; border-radius: 999px; }
+
+/* Each step fades up when shown */
+.view { animation: fade-up 0.45s ease both; }
+
+form { text-align: left; margin-top: 16px; }
+label { font-size: 14px; font-weight: 600; color: #3c4043; display: block; margin-bottom: 6px; }
+input { width: 100%; padding: 12px; border: 1px solid #dadce0; border-radius: 10px; font-size: 16px; margin-bottom: 16px; }
+input:focus { border-color: #14a37f; outline: none; box-shadow: 0 0 0 3px rgba(20, 163, 127, .18); }
+button { width: 100%; background: #0b6e4f; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform .1s, background .2s; }
+button:active { transform: scale(.98); }
+button:disabled { background: #9fcfbf; cursor: not-allowed; }
+#done-btn { background: #1a73e8; }
+
+.stats { display: flex; gap: 8px; margin: 20px 0; }
+.stats div { flex: 1; background: #f1f3f4; border-radius: 12px; padding: 16px 8px; }
+.stats span { display: block; font-size: 28px; font-weight: 700; color: #0b6e4f; }
+.stats small { color: #5f6368; }
+.stats span.bump { animation: bump 0.5s ease; }
+
+.error { color: #d93025; font-size: 14px; margin-top: 12px; }
+.hidden { display: none !important; }
+
+/* Falling cans & bottles */
+.rain { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+.rain.front { z-index: 3; }
+.drop { position: absolute; top: -70px; will-change: transform; animation: fall linear forwards; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .18)); }
+.drop svg { display: block; width: 100%; height: auto; }
+
+@keyframes fall {
+  from { transform: translate(0, 0) rotate(var(--r0)); }
+  to   { transform: translate(var(--dx), calc(100vh + 140px)) rotate(var(--r1)); }
+}
+@keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes spin-in { from { opacity: 0; transform: scale(.3) rotate(-180deg); } to { opacity: 1; transform: none; } }
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.35); color: #14a37f; } 100% { transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rain { display: none; }
+  .view, .hero-icon, .stats span.bump { animation: none; }
+}

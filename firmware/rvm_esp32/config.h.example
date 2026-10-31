@@ -1,0 +1,12 @@
+// Copy to config.h and fill in. config.h is gitignored - never commit it.
+#pragma once
+
+#define WIFI_SSID   "your-hotspot-name"
+#define WIFI_PASS   "your-hotspot-password"
+
+// Laptop's LAN IP running the Flask backend (not localhost)
+#define SERVER_URL  "http://192.168.1.10:5000"
+
+#define MACHINE_ID  "RVM-01"
+// Must match MACHINE_KEY in backend/.env
+#define MACHINE_KEY "replace-with-random-key"

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="5">
+  <title>RVM Admin</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♻️</text></svg>">
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+<body>
+  <header>
+    <h1>♻️ RVM Transaction History</h1>
+    <span class="muted">Auto-refresh every 5 s · mock payouts</span>
+  </header>
+
+  <section class="tiles">
+    <div><span>{{ totals.sessions }}</span><small>sessions</small></div>
+    <div><span>{{ totals.active }}</span><small>active now</small></div>
+    <div><span>{{ totals.paid }}</span><small>payouts</small></div>
+    <div><span>₹{{ totals.paid_amount }}</span><small>total paid</small></div>
+    <div><span>{{ items.bottles }}</span><small>bottles</small></div>
+    <div><span>{{ items.cans }}</span><small>cans</small></div>
+  </section>
+
+  {% if not sessions %}
+    <p class="muted empty">No sessions yet. Scan the QR and press Start.</p>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Started</th><th>Machine</th><th>UPI ID</th><th>Status</th>
+          <th class="num">Bottles</th><th class="num">Cans</th><th class="num">Amount</th>
+          <th>Ended by</th><th>Payout</th><th>Ref</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+        {% set items_for = deposits.get(s.id, []) %}
+        <tr>
+          <td>{{ fmt_time(s.created_at) }}</td>
+          <td>{{ s.machine_id }}</td>
+          <td class="mono">{{ s.upi_id }}</td>
+          <td><span class="pill {{ s.status }}">{{ s.status }}</span></td>
+          <td class="num">{{ items_for | selectattr('type', 'equalto', 'bottle') | list | length }}</td>
+          <td class="num">{{ items_for | selectattr('type', 'equalto', 'can') | list | length }}</td>
+          <td class="num"><strong>₹{{ s.total_amount }}</strong></td>
+          <td>{{ s.end_reason or '-' }}</td>
+          <td>{% if s.payout_status %}<span class="pill {{ s.payout_status }}">{{ s.payout_status }}</span>{% else %}-{% endif %}</td>
+          <td class="mono">{{ s.payout_ref or '-' }}</td>
+        </tr>
+        {% if items_for %}
+        <tr class="detail">
+          <td colspan="10">
+            {% for d in items_for %}
+              <span class="chip">{{ fmt_time(d.created_at)[-8:] }} · {{ d.type }} ₹{{ d.amount }}</span>
+            {% endfor %}
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</body>
+</html>
