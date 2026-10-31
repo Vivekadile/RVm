@@ -3,9 +3,10 @@ import hmac
 from datetime import datetime
 from functools import wraps
 
-from flask import Blueprint, Response, current_app, render_template, request
+from flask import Blueprint, Response, current_app, redirect, render_template, request, url_for
 
 from ..db import get_db
+from ..services.sessions import get_session, refresh_payout
 
 bp = Blueprint("admin", __name__)
 
@@ -45,6 +46,7 @@ def history():
         "SELECT COUNT(*) AS sessions, "
         "COALESCE(SUM(status = 'active'), 0) AS active, "
         "COALESCE(SUM(payout_status = 'success'), 0) AS paid, "
+        "COALESCE(SUM(payout_status IN ('pending', 'failed') AND provider = 'cashfree'), 0) AS unsettled, "
         "COALESCE(SUM(CASE WHEN payout_status = 'success' THEN total_amount END), 0) AS paid_amount "
         "FROM sessions"
     ).fetchone()
@@ -56,5 +58,33 @@ def history():
     payout_label = f"Cashfree {cfg['CASHFREE_ENV']}" if cfg["PAYOUT_MODE"] == "cashfree" else "mock"
     return render_template(
         "admin.html", sessions=sessions, deposits=deposits, totals=totals, items=items, fmt_time=fmt_time,
-        payout_label=payout_label,
+        payout_label=payout_label, needs_refresh=needs_refresh,
     )
+
+
+def needs_refresh(session):
+    """True for Cashfree payouts that aren't final yet (Refresh status button)."""
+    return session["provider"] == "cashfree" and session["payout_status"] in ("pending", "failed")
+
+
+@bp.post("/admin/refresh/<session_id>")
+@require_admin
+def refresh_one(session_id):
+    """Re-check one session's Cashfree transfer status."""
+    session = get_session(session_id)
+    if session is not None:
+        refresh_payout(session)
+    return redirect(url_for("admin.history"))
+
+
+@bp.post("/admin/refresh")
+@require_admin
+def refresh_all():
+    """Re-check every Cashfree payout that isn't final yet."""
+    rows = get_db().execute(
+        "SELECT * FROM sessions WHERE provider = 'cashfree' AND payout_status IN ('pending', 'failed') "
+        "ORDER BY created_at DESC LIMIT 50"
+    ).fetchall()
+    for session in rows:
+        refresh_payout(session)
+    return redirect(url_for("admin.history"))

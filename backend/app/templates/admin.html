@@ -19,9 +19,16 @@
     <div><span>{{ totals.active }}</span><small>active now</small></div>
     <div><span>{{ totals.paid }}</span><small>payouts</small></div>
     <div><span>₹{{ totals.paid_amount }}</span><small>total paid</small></div>
+    <div><span>{{ totals.unsettled }}</span><small>Cashfree not final</small></div>
     <div><span>{{ items.bottles }}</span><small>bottles</small></div>
     <div><span>{{ items.cans }}</span><small>cans</small></div>
   </section>
+
+  {% if totals.unsettled %}
+  <form method="post" action="{{ url_for('admin.refresh_all') }}" class="bar">
+    <button type="submit">↻ Refresh all pending / failed Cashfree payouts</button>
+  </form>
+  {% endif %}
 
   {% if not sessions %}
     <p class="muted empty">No sessions yet. Scan the QR and press Start.</p>
@@ -32,7 +39,7 @@
         <tr>
           <th>Started</th><th>Machine</th><th>UPI ID</th><th>Status</th>
           <th class="num">Bottles</th><th class="num">Cans</th><th class="num">Amount</th>
-          <th>Ended by</th><th>Payout</th><th>Ref</th>
+          <th>Ended by</th><th>Payout</th><th>Ref</th><th>Provider</th>
         </tr>
       </thead>
       <tbody>
@@ -49,10 +56,23 @@
           <td>{{ s.end_reason or '-' }}</td>
           <td>{% if s.payout_status %}<span class="pill {{ s.payout_status }}">{{ s.payout_status }}</span>{% else %}-{% endif %}</td>
           <td class="mono">{{ s.payout_ref or '-' }}</td>
+          <td>
+            {% if s.provider %}
+              <strong>{{ s.provider }}</strong>
+              {% if s.provider_status %}<span class="pill raw">{{ s.provider_status }}</span>{% endif %}
+              {% if s.provider_ref %}<div class="mono small">cf: {{ s.provider_ref }}</div>{% endif %}
+              {% if s.provider_error %}<div class="err small">{{ s.provider_error }}</div>{% endif %}
+              {% if needs_refresh(s) %}
+              <form method="post" action="{{ url_for('admin.refresh_one', session_id=s.id) }}">
+                <button type="submit" class="mini">↻ Refresh status</button>
+              </form>
+              {% endif %}
+            {% else %}-{% endif %}
+          </td>
         </tr>
         {% if items_for %}
         <tr class="detail">
-          <td colspan="10">
+          <td colspan="11">
             {% for d in items_for %}
               <span class="chip">{{ fmt_time(d.created_at)[-8:] }} · {{ d.type }} ₹{{ d.amount }}</span>
             {% endfor %}

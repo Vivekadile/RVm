@@ -196,9 +196,10 @@ void showResult(JsonDocument& s) {
     leds(false, false, false);
     beep();
   } else {
-    show("Payout failed", l2, "Ask operator");
-    leds(false, true, false);
-    beeps(2);
+    // pending / failed: money is being processed (operator can refresh status on /admin)
+    show("Payment", "processing", l2, s["payout_ref"] | "");
+    leds(true, false, true);
+    beep();
   }
   Serial.printf("Session %s ended: %s Rs %d\n", sessionId.c_str(), payout, total);
   delay(T_PAID);

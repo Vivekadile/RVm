@@ -108,19 +108,26 @@
     stopPolling();
     saveSession(null);
     lastCounts = null;
-    if (s.payout_status === "failed") {
-      $("done-icon").innerText = "⚠️";
-      $("done-title").innerText = "Payout failed";
-      $("done-text").innerText = "Please contact the operator.";
-    } else {
+    $("done-title").innerText = "Thanks for using RVM!";
+    if (s.payout_status === "success") {
       $("done-icon").innerText = "💚";
-      $("done-title").innerText = "Thanks for using RVM!";
-      $("done-text").innerText = s.payout_status === "success"
-        ? `₹${s.total_amount} sent to ${s.upi_masked}, ref ${s.payout_ref}`
-        : "No items deposited this time.";
-      rain(16, { spreadMs: 1500 });
+      $("done-text").innerText = `₹${s.total_amount} sent to ${s.upi_masked}, ref ${s.payout_ref}`;
+    } else if (s.payout_status === "skipped") {
+      $("done-icon").innerText = "💚";
+      $("done-text").innerText = "No items deposited this time.";
+    } else {
+      // pending or failed: the operator sees the details on /admin and can refresh the status
+      $("done-icon").innerText = "⏳";
+      $("done-text").innerText = `Payment processing: ₹${s.total_amount} to ${s.upi_masked}` +
+        (s.payout_ref ? `, ref ${s.payout_ref}` : "");
     }
+    rain(16, { spreadMs: 1500 });
     $("done-counts").innerText = `${s.bottle_count} bottle(s), ${s.can_count} can(s) recycled`;
+    const showProvider = s.provider === "cashfree" && s.provider_status;
+    $("done-provider").classList.toggle("hidden", !showProvider);
+    if (showProvider) {
+      $("done-provider").innerText = `Cashfree: ${s.provider_status}` + (s.provider_ref ? ` · ${s.provider_ref}` : "");
+    }
     show("done-view");
   }
 

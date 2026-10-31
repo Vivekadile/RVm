@@ -13,8 +13,12 @@ CREATE TABLE IF NOT EXISTS sessions (
     item_count       INTEGER NOT NULL DEFAULT 0,
     total_amount     INTEGER NOT NULL DEFAULT 0,       -- rupees
     end_reason       TEXT,
-    payout_status    TEXT,                             -- success | failed | skipped
-    payout_ref       TEXT,
+    payout_status    TEXT,                             -- success | pending | failed | skipped
+    payout_ref       TEXT,                             -- our ref: MOCK_x or Cashfree transfer_id
+    provider         TEXT,                             -- mock | cashfree
+    provider_ref     TEXT,                             -- Cashfree cf_transfer_id
+    provider_status  TEXT,                             -- raw Cashfree status, e.g. SUCCESS / PENDING / ERROR
+    provider_error   TEXT,                             -- failure reason (admin only)
     created_at       REAL NOT NULL,
     last_activity_at REAL NOT NULL,
     ended_at         REAL
@@ -52,9 +56,24 @@ def close_db(_exc=None):
         db.close()
 
 
+# Columns added after the first release; ALTERed into existing databases on startup
+ADDED_SESSION_COLUMNS = {
+    "provider": "TEXT",
+    "provider_ref": "TEXT",
+    "provider_status": "TEXT",
+    "provider_error": "TEXT",
+}
+
+
 def init_db():
-    """Create tables if they don't exist."""
-    get_db().executescript(SCHEMA)
+    """Create tables if they don't exist and add any missing columns (no data loss)."""
+    db = get_db()
+    db.executescript(SCHEMA)
+    existing = {row["name"] for row in db.execute("PRAGMA table_info(sessions)")}
+    for name, col_type in ADDED_SESSION_COLUMNS.items():
+        if name not in existing:
+            db.execute(f"ALTER TABLE sessions ADD COLUMN {name} {col_type}")
+    db.commit()
 
 
 def now():

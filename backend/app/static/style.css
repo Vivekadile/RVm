@@ -40,6 +40,7 @@ button:disabled { background: #9fcfbf; cursor: not-allowed; }
 .stats small { color: #5f6368; }
 .stats span.bump { animation: bump 0.5s ease; }
 
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 .error { color: #d93025; font-size: 14px; margin-top: 12px; }
 .hidden { display: none !important; }
 

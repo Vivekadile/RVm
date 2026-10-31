@@ -2,7 +2,7 @@
 from flask import current_app
 
 from ..db import get_db, now
-from .payout import send_payout
+from .payout import cashfree_status, send_payout
 
 
 def get_session(session_id):
@@ -31,11 +31,33 @@ def end_session(session, reason):
         return get_session(session["id"])
 
     result = send_payout(session["upi_id"], session["total_amount"], session["id"], current_app.config)
+    save_payout(session["id"], result)
+    return get_session(session["id"])
+
+
+def save_payout(session_id, result):
+    """Store a payout result dict on the session row."""
+    db = get_db()
     db.execute(
-        "UPDATE sessions SET payout_status = ?, payout_ref = ? WHERE id = ?",
-        (result["status"], result["ref"], session["id"]),
+        "UPDATE sessions SET payout_status = ?, payout_ref = COALESCE(?, payout_ref), provider = ?, "
+        "provider_ref = COALESCE(?, provider_ref), provider_status = ?, provider_error = ? WHERE id = ?",
+        (result["status"], result["ref"], result["provider"], result["provider_ref"],
+         result["provider_status"], result["error"], session_id),
     )
     db.commit()
+
+
+def refresh_payout(session):
+    """Re-check a Cashfree payout that isn't final yet; returns the updated row."""
+    if session["provider"] != "cashfree" or session["payout_status"] == "success" or not session["payout_ref"]:
+        return session
+    result = cashfree_status(session["payout_ref"], current_app.config)
+    if result["provider_status"] == "ERROR" and session["provider_status"] not in (None, "ERROR"):
+        # Couldn't reach Cashfree this time: keep the last known status, just note the error
+        get_db().execute("UPDATE sessions SET provider_error = ? WHERE id = ?", (result["error"], session["id"]))
+        get_db().commit()
+    else:
+        save_payout(session["id"], result)
     return get_session(session["id"])
 
 
@@ -77,4 +99,7 @@ def session_to_dict(session):
         "end_reason": session["end_reason"],
         "payout_status": session["payout_status"],
         "payout_ref": session["payout_ref"],
+        "provider": session["provider"],
+        "provider_ref": session["provider_ref"],
+        "provider_status": session["provider_status"],
     }
