@@ -16,7 +16,7 @@ College demo of a breadboard reverse vending machine. The user drops a plastic b
 rvm-project/
 ├── backend/     Flask + SQLite API and phone page   (see backend/README.md)
 ├── firmware/    ESP32 Arduino sketch
-└── docs/        wiring.md (pin table), qr_RVM-01.png (printable QR)
+└── docs/        wiring.md (pin table), qr_RVM-01.png (printable QR), deploy_pythonanywhere.md
 ```
 
 ## Hardware
@@ -91,6 +91,10 @@ This writes `docs/qr_RVM-01.png` with "Scan to recycle" and the URL underneath. 
    `config.h` is gitignored, so never commit it. Arduino IDE will show it as a second tab next to the sketch.
 5. Open `firmware/rvm_esp32/rvm_esp32.ino`. Select board **ESP32 Dev Module** and the right port, then click **Upload**. If the upload hangs on "Connecting...", hold the **BOOT** button.
 6. Open the Serial Monitor at 115200 baud. You should see `WiFi OK, IP ...`, and the OLED should show "Scan QR to start".
+
+## Public deployment (PythonAnywhere)
+
+To let anyone use the machine over mobile data, follow [docs/deploy_pythonanywhere.md](docs/deploy_pythonanywhere.md). It covers the virtualenv, `.env`, the WSGI file, the public QR (`make_qr.py --base-url ...`), and switching the ESP32 to HTTPS (`USE_HTTPS 1` in `config.h`).
 
 ## Secrets
 

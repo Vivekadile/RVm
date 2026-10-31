@@ -5,6 +5,7 @@
 // Libraries: U8g2, ESP32Servo, ArduinoJson (v7). Pins: see docs/wiring.md
 
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <U8g2lib.h>
@@ -38,11 +39,28 @@
 #define T_PAID      4000   // "Paid to UPI!" screen
 #define T_POLL      2000   // server poll interval (idle and active)
 #define T_IDLE_END  60000  // machine-side auto end with no items
+
+// USE_HTTPS comes from config.h: 1 = public server (PythonAnywhere), 0 = laptop on local WiFi
+#ifndef USE_HTTPS
+#define USE_HTTPS 0
+#endif
+#if USE_HTTPS
+#define HTTP_TIMEOUT_MS 10000  // TLS handshake over the internet is slow on ESP32
+#else
 #define HTTP_TIMEOUT_MS 4000
+#endif
 
 U8G2_SH1106_128X64_NONAME_F_4W_SW_SPI oled(U8G2_R0, 22, 21, 4, 17, 16);  // SCK, MOSI, CS, DC, RES
 Servo gate;
 Servo sorter;
+
+// One client + HTTPClient for the whole run so the (TLS) connection is reused between polls
+#if USE_HTTPS
+WiFiClientSecure netClient;  // setInsecure() in setup: no cert check - OK for a prototype only
+#else
+WiFiClient netClient;
+#endif
+HTTPClient http;
 
 enum State { IDLE, ACTIVE };
 State state = IDLE;
@@ -118,9 +136,10 @@ void connectWifi() {
 // Sends a request, parses the JSON reply into `out`. Returns HTTP code (<0 = network error).
 int httpJson(const char* method, const String& path, const String& body, JsonDocument& out) {
   connectWifi();
-  HTTPClient http;
-  http.setTimeout(HTTP_TIMEOUT_MS);
-  http.begin(String(SERVER_URL) + path);
+  if (!http.begin(netClient, String(SERVER_URL) + path)) {
+    Serial.printf("[HTTP] %s %s -> begin() failed\n", method, path.c_str());
+    return -1;
+  }
   http.addHeader("X-Machine-Key", MACHINE_KEY);
   http.addHeader("Content-Type", "application/json");
 
@@ -351,6 +370,21 @@ void handleItem() {
 
 // ---------- Arduino entry points ----------
 
+// Stops with a clear OLED message if config.h is inconsistent, instead of failing silently later.
+void checkConfig() {
+  const char* problem = nullptr;
+  bool isHttps = strncmp(SERVER_URL, "https://", 8) == 0;
+  if (strstr(SERVER_URL, "USERNAME")) problem = "Set USERNAME in URL";
+  else if (USE_HTTPS && !isHttps) problem = "USE_HTTPS=1 needs https";
+  else if (!USE_HTTPS && isHttps) problem = "https URL: USE_HTTPS=1";
+  if (!problem) return;
+  Serial.printf("CONFIG ERROR: %s (SERVER_URL=%s, USE_HTTPS=%d)\n", problem, SERVER_URL, USE_HTTPS);
+  show("Config error", problem, "Fix config.h", "and re-upload");
+  leds(false, true, false);
+  while (true) delay(1000);
+}
+
+
 void setup() {
   Serial.begin(115200);
   pinMode(PIN_IR, INPUT);
@@ -373,9 +407,17 @@ void setup() {
   delay(1000);
   gate.detach();
 
+  checkConfig();
+#if USE_HTTPS
+  netClient.setInsecure();
+#endif
+  http.setReuse(true);
+  http.setTimeout(HTTP_TIMEOUT_MS);
+  http.setConnectTimeout(HTTP_TIMEOUT_MS);
+
   connectWifi();
-  Serial.printf("SERVER_URL=%s MACHINE_ID=%s MACHINE_KEY=%.4s... (len %d)\n",
-                SERVER_URL, MACHINE_ID, MACHINE_KEY, (int)strlen(MACHINE_KEY));
+  Serial.printf("SERVER_URL=%s USE_HTTPS=%d MACHINE_ID=%s MACHINE_KEY=%.4s... (len %d)\n",
+                SERVER_URL, USE_HTTPS, MACHINE_ID, MACHINE_KEY, (int)strlen(MACHINE_KEY));
   goIdle();
 }
 

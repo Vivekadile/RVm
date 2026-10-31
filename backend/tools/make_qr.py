@@ -1,4 +1,9 @@
-"""Generate a printable QR for a machine: python tools/make_qr.py [--ip X] [--machine RVM-01]"""
+"""Generate a printable QR for a machine.
+
+Public (PythonAnywhere):  python tools/make_qr.py --base-url https://USERNAME.pythonanywhere.com
+                     or:  PUBLIC_BASE_URL=https://... in .env, then  python tools/make_qr.py
+Local WiFi demo:          python tools/make_qr.py --ip 192.168.1.4
+"""
 import argparse
 import os
 import socket
@@ -43,14 +48,23 @@ def make_qr(url, caption, out_path):
 
 def main():
     """Parse args and write docs/qr_<machine>.png."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--ip", default=None, help="laptop LAN IP (default: auto-detect)")
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--base-url", default=os.getenv("PUBLIC_BASE_URL"),
+                        help="public site, e.g. https://USERNAME.pythonanywhere.com (default: PUBLIC_BASE_URL)")
+    parser.add_argument("--ip", default=None, help="laptop LAN IP for local mode (default: auto-detect)")
     parser.add_argument("--port", type=int, default=Config.PORT)
     parser.add_argument("--machine", default=Config.MACHINE_IDS[0])
+    parser.add_argument("--out", default=None, help="output PNG (default: docs/qr_<machine>.png)")
     args = parser.parse_args()
 
-    url = f"http://{args.ip or lan_ip()}:{args.port}/m/{args.machine}"
-    out_path = os.path.join(DOCS_DIR, f"qr_{args.machine}.png")
+    if args.base_url and not args.ip:
+        base = args.base_url.rstrip("/")
+        if not base.startswith(("http://", "https://")):
+            parser.error("--base-url must start with http:// or https://")
+    else:
+        base = f"http://{args.ip or lan_ip()}:{args.port}"
+    url = f"{base}/m/{args.machine}"
+    out_path = args.out or os.path.join(DOCS_DIR, f"qr_{args.machine}.png")
     make_qr(url, "Scan to recycle", out_path)
     print(f"QR for {url}\n -> {out_path}")
 

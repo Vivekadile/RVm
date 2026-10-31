@@ -17,6 +17,9 @@ def create_app(overrides=None):
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     if not app.config["MACHINE_KEY"]:
         app.logger.warning("MACHINE_KEY is empty - all machine requests will be rejected")
+    if not app.config.get("SECRET_KEY_FROM_ENV", True):
+        app.logger.warning("SECRET_KEY not set in .env - using a random one for this process")
+    app.logger.info("Database: %s", app.config["DATABASE_PATH"])
 
     db.init_app(app)
 

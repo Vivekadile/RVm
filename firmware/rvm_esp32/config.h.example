@@ -1,12 +1,19 @@
 // Copy to config.h and fill in. config.h is gitignored - never commit it.
 #pragma once
 
-#define WIFI_SSID   "your-hotspot-name"
-#define WIFI_PASS   "your-hotspot-password"
+#define WIFI_SSID   "your-wifi-or-hotspot"
+#define WIFI_PASS   "your-wifi-password"
 
-// Laptop's LAN IP running the Flask backend (not localhost)
-#define SERVER_URL  "http://192.168.1.10:5000"
+// 1 = public server over HTTPS (PythonAnywhere, works from any internet)
+// 0 = laptop on the same WiFi over plain HTTP (local testing)
+#define USE_HTTPS   1
+
+#if USE_HTTPS
+  #define SERVER_URL "https://USERNAME.pythonanywhere.com"   // replace USERNAME
+#else
+  #define SERVER_URL "http://192.168.1.10:5001"              // laptop LAN IP, not localhost
+#endif
 
 #define MACHINE_ID  "RVM-01"
-// Must match MACHINE_KEY in backend/.env
+// Must match MACHINE_KEY in the server's backend/.env
 #define MACHINE_KEY "replace-with-random-key"

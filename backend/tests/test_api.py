@@ -295,3 +295,11 @@ def test_admin_shows_history(client):
 def test_admin_disabled_without_password(tmp_path):
     app = create_app({"TESTING": True, "DATABASE_PATH": str(tmp_path / "t.db"), "ADMIN_PASSWORD": ""})
     assert app.test_client().get("/admin", headers=admin_headers("")).status_code == 403
+
+
+# ---- deployment config ----
+
+def test_relative_db_path_resolves_to_backend_dir():
+    from app.config import BASE_DIR, resolve_path
+    assert resolve_path("rvm.db") == f"{BASE_DIR}/rvm.db"
+    assert resolve_path("/home/x/rvm.db") == "/home/x/rvm.db"
