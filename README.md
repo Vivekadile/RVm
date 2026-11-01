@@ -12,11 +12,23 @@ College demo of a breadboard reverse vending machine. The user drops a plastic b
    - **Rejected or limit reached:** red LED, 2 beeps, and the gate stays shut.
 5. **Done.** The user presses the machine's Done button or Done on the phone. The server totals the deposits and makes a mock payout. The OLED shows "Paid to UPI! Rs X" for 4 s, and the phone shows "Rs X sent to ab\*\*\*\*@upi, ref MOCK_...". The machine then goes back to idle. With no item for 60 s, the machine ends the session by itself. The server also auto-ends after 300 s idle, as a backup.
 
+## Demo
+
+Live flow on the public site. Video: [docs/demo/rvm_demo.mp4](docs/demo/rvm_demo.mp4)
+
+| Welcome | UPI | Live count | Thank you |
+|---|---|---|---|
+| <img src="docs/demo/1_welcome.png" width="180"> | <img src="docs/demo/2_upi.png" width="180"> | <img src="docs/demo/4_can.png" width="180"> | <img src="docs/demo/5_thanks.png" width="180"> |
+
+Admin transaction history (`/admin`):
+
+<img src="docs/demo/6_admin.png" width="720">
+
 ```
 rvm-project/
 ├── backend/     Flask + SQLite API and phone page   (see backend/README.md)
 ├── firmware/    ESP32 Arduino sketch
-└── docs/        wiring.md (pin table), qr_RVM-01.png (printable QR), deploy_pythonanywhere.md
+└── docs/        wiring.md (pin table), qr_RVM-01.png (printable QR), deploy_pythonanywhere.md, demo/
 ```
 
 ## Hardware
